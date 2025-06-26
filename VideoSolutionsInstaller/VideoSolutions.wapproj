@@ -121,5 +121,8 @@
     <Content Include="..\VideoCenter\bin\Release\net8.0-windows\libvlc\win-x64\**\*.*">
       <Link>VideoCenter\libvlc\win-x64\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
+    <Content Include="..\VideoCenter\VLC-LICENSE.txt">
+      <Link>VideoCenter\VLC-LICENSE.txt</Link>
+    </Content>
   </ItemGroup>
 </Project>

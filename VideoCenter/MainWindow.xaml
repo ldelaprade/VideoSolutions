@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:VideoCenter"
         mc:Ignorable="d"
         Title="Video Center" Height="450" Width="800">
-    <Grid>
+    <Grid Background="WhiteSmoke">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="5" /> <!-- Splitter width -->
@@ -22,15 +22,28 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" /> <!-- New row for the path display -->
             </Grid.RowDefinitions>
-            <vlc:VideoView x:Name="videoView" Background="Transparent"
+            <vlc:VideoView x:Name="videoView" Background="WhiteSmoke"
                            Grid.Row="0"
                            HorizontalAlignment="Stretch"
                            VerticalAlignment="Stretch"
                            Margin="0" />
 
+            <!-- Video path display -->
+            <TextBlock x:Name="VideoPathText"
+                       Grid.Row="1"
+                       Margin="0,0,0,4"
+                       FontSize="12"
+                       Foreground="DimGray"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Stretch"
+                       Text=""
+                       />
+
             <!-- Control Bar -->
-            <StackPanel Grid.Row="1" Orientation="Vertical" Margin="10">
+            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
@@ -82,13 +95,14 @@
                     Margin="0,0,0,10"
                     Click="AddBookmarkButton_Click"
                     Grid.Row="0"/>
-            <ListBox x:Name="BookmarksListBox"
+            <ListBox x:Name="BookmarksListBox" Background="WhiteSmoke"
                      Margin="0"
                      Grid.Row="1"
                      HorizontalAlignment="Stretch"
                      VerticalAlignment="Stretch"
                      SelectionChanged="BookmarksListBox_SelectionChanged"
-                     DisplayMemberPath="DisplayText"/>
+                     DisplayMemberPath="DisplayText"
+                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown"/>
         </Grid>
     </Grid>
 </Window>

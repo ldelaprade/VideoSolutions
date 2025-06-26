@@ -2,13 +2,16 @@
 using LibVLCSharp.WPF;
 using Microsoft.Win32;
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Timers;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+
 using System.Windows.Threading;
-using System.Collections.ObjectModel;
 
 namespace VideoCenter
 {
@@ -23,6 +26,7 @@ namespace VideoCenter
         private bool _isDraggingSeekBar = false;
         private bool _isFullscreen = false;
         private bool _isPaused = false;
+        private bool _videoEndReached = false;
         private WindowState _previousWindowState;
         private WindowStyle _previousWindowStyle;
         private ResizeMode _previousResizeMode;
@@ -38,6 +42,10 @@ namespace VideoCenter
         public MainWindow()
         {
             InitializeComponent();
+
+            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+            this.Title = $"Video Center {version}";
+
             // Preferred path to the VLC native libraries
             var preferredLibVlcPath = Path.Combine(AppContext.BaseDirectory, "libvlc", "win-x64");
 
@@ -53,18 +61,19 @@ namespace VideoCenter
             // Initialize LibVLC with the selected path
             Core.Initialize(libVlcPathToUse);
 
-            //_libVLC = new LibVLC("--video-background=0x000000"); // Black background
-            //_libVLC = new LibVLC("--no - audio");
             _libVLC = new LibVLC();
 
             _mediaPlayer = new MediaPlayer(_libVLC);
 
             videoView.MediaPlayer = _mediaPlayer;
 
+            // Set initial volume to 0 for both MediaPlayer and Slider
+            _mediaPlayer.Volume = 0;
+            VolumeSlider.Value = 0;
+
             _mediaPlayer.LengthChanged += MediaPlayer_LengthChanged;
             _mediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
-
-            VolumeSlider.Value = _mediaPlayer.Volume;
+            _mediaPlayer.EndReached += MediaPlayer_EndReached;
 
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromMilliseconds(500);
@@ -72,6 +81,11 @@ namespace VideoCenter
             _timer.Start();
 
             BookmarksListBox.ItemsSource = _bookmarks;
+        }
+
+        private void MediaPlayer_EndReached(object? sender, EventArgs e)
+        {
+            _videoEndReached = true;
         }
 
         private void RefreshButtonsState()
@@ -95,6 +109,7 @@ namespace VideoCenter
                 _mediaPlayer.Stop();
                 using var media = new Media(_libVLC, dialog.FileName, FromType.FromPath);
                 _mediaPlayer.Play(media);
+                VideoPathText.Text = dialog.FileName; // Update the video path display
             }
         }
 
@@ -103,11 +118,12 @@ namespace VideoCenter
             if (_mediaPlayer.Media != null)
                 _mediaPlayer.Play();
             _isPaused = false;
+            _videoEndReached = false;
         }
 
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_mediaPlayer.CanPause)
+            if (_mediaPlayer.CanPause && !_videoEndReached)
             {
                 _mediaPlayer.Pause();
                 _isPaused = !_isPaused;
@@ -126,7 +142,7 @@ namespace VideoCenter
                 _mediaPlayer.Volume = (int)VolumeSlider.Value;
         }
 
-        private void MediaPlayer_LengthChanged(object sender, MediaPlayerLengthChangedEventArgs e)
+        private void MediaPlayer_LengthChanged(object? sender, MediaPlayerLengthChangedEventArgs e)
         {
             Dispatcher.Invoke(() =>
             {
@@ -134,7 +150,7 @@ namespace VideoCenter
             });
         }
 
-        private void MediaPlayer_TimeChanged(object sender, MediaPlayerTimeChangedEventArgs e)
+        private void MediaPlayer_TimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
         {
             Dispatcher.Invoke(() =>
             {
@@ -146,7 +162,7 @@ namespace VideoCenter
             });
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object? sender, EventArgs e)
         {
             if (_mediaPlayer.Media != null && !_isDraggingSeekBar)
             {
@@ -203,7 +219,7 @@ namespace VideoCenter
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            string licensePath = "VLC-LICENSE.txt";
+            string licensePath = Path.Combine(AppContext.BaseDirectory, "VLC-LICENSE.txt");
             string licenseText;
 
             try
@@ -215,7 +231,9 @@ namespace VideoCenter
                 licenseText = "VLC-LICENSE.txt not found.";
             }
 
-            MessageBox.Show(licenseText, "About Video Center", MessageBoxButton.OK, MessageBoxImage.Information);
+            var dialog = new SimpleDialog(licenseText, false, sender as FrameworkElement) {  Owner = this  };
+            dialog.ShowDialog();
+
         }
 
         private void AddBookmarkButton_Click(object sender, RoutedEventArgs e)
@@ -231,7 +249,30 @@ namespace VideoCenter
         {
             if (BookmarksListBox.SelectedItem is VideoBookmark bookmark)
             {
+                if (!_isPaused)
+                { 
+                    _mediaPlayer.Stop();
+                    _mediaPlayer.Play();
+                    _videoEndReached = false;
+                }
                 _mediaPlayer.Time = bookmark.Time;
+            }
+        }
+
+        private void BookmarksListBox_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            var item = ItemsControl.ContainerFromElement(BookmarksListBox, e.OriginalSource as DependencyObject) as System.Windows.Controls.ListBoxItem;
+            if (item != null)
+            {
+                // Prevent selection on right-click
+                e.Handled = true;
+
+                // Get the bookmark associated with the item
+                if (item.DataContext is VideoBookmark bookmark)
+                {
+                    var dialog = new SimpleDialog($"Remove bookmark at {bookmark.DisplayText}?", true, item) { Owner = this };
+                    if (true == dialog.ShowDialog()) _bookmarks.Remove(bookmark);
+                }
             }
         }
     }
