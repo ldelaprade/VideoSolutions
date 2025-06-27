@@ -8,13 +8,10 @@
         ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
         ShowInTaskbar="False"
-        WindowStartupLocation="Manual"
+        WindowStartupLocation="CenterOwner"
         MinWidth="320"
-        MinHeight="120">
-
-
-
-        <Border Padding="16" Background="White">
+        MinHeight="120" >
+    <Border Padding="16" Background="White">
         <StackPanel>
             <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300" Margin="0,0,0,12">
                 <TextBlock x:Name="MessageTextBlock"

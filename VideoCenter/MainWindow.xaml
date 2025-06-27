@@ -102,7 +102,13 @@
                      VerticalAlignment="Stretch"
                      SelectionChanged="BookmarksListBox_SelectionChanged"
                      DisplayMemberPath="DisplayText"
-                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown"/>
+                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <!-- ContextMenu Setter removed -->
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
         </Grid>
     </Grid>
 </Window>

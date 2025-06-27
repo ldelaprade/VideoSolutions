@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 
 using System.Windows.Threading;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace VideoCenter
 {
@@ -34,7 +35,7 @@ namespace VideoCenter
         public class VideoBookmark
         {
             public long Time { get; set; }
-            public string DisplayText => TimeSpan.FromMilliseconds(Time).ToString(@"hh\:mm\:ss");
+            public string DisplayText => TimeSpan.FromMilliseconds(Time).ToString(@"hh\:mm\:ss\.fff");
         }
 
         private ObservableCollection<VideoBookmark> _bookmarks = new();
@@ -240,8 +241,30 @@ namespace VideoCenter
         {
             if (_mediaPlayer != null && _mediaPlayer.Media != null)
             {
-                var bookmark = new VideoBookmark { Time = _mediaPlayer.Time };
-                _bookmarks.Add(bookmark);
+                long currentTime = _mediaPlayer.Time;
+
+                // Create new bookmark
+                var newBookmark = new VideoBookmark { Time = currentTime };
+
+                // Check for duplicate
+                foreach (var bm in _bookmarks)
+                {
+                    if (bm.Time == newBookmark.Time)
+                    {
+                        var dialog = new SimpleDialog($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.", 
+                            false, sender as FrameworkElement) { Owner = this };
+                        dialog.ShowDialog();
+                        return;
+                    }
+                }
+
+                // Find the correct index to insert (keep list sorted by Time)
+                int insertIndex = 0;
+                while (insertIndex < _bookmarks.Count && _bookmarks[insertIndex].Time < newBookmark.Time)
+                {
+                    insertIndex++;
+                }
+                _bookmarks.Insert(insertIndex, newBookmark);
             }
         }
 
@@ -261,19 +284,72 @@ namespace VideoCenter
 
         private void BookmarksListBox_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            var item = ItemsControl.ContainerFromElement(BookmarksListBox, e.OriginalSource as DependencyObject) as System.Windows.Controls.ListBoxItem;
+            var item = ItemsControl.ContainerFromElement(BookmarksListBox, e.OriginalSource as DependencyObject) as ListBoxItem;
             if (item != null)
             {
-                // Prevent selection on right-click
-                e.Handled = true;
+                BookmarksListBox.SelectedItem = item.DataContext;
 
-                // Get the bookmark associated with the item
-                if (item.DataContext is VideoBookmark bookmark)
+                var contextMenu = new ContextMenu();
+
+                var removeMenuItem = new MenuItem { Header = "Remove Bookmark" };
+                removeMenuItem.Click += (s, args) =>
                 {
-                    var dialog = new SimpleDialog($"Remove bookmark at {bookmark.DisplayText}?", true, item) { Owner = this };
-                    if (true == dialog.ShowDialog()) _bookmarks.Remove(bookmark);
+                    if (item.DataContext is VideoBookmark bookmark)
+                    {
+                        var dialog = new SimpleDialog($"Remove bookmark at {bookmark.DisplayText}?", true, item as FrameworkElement) { Owner = this };
+                        if (dialog.ShowDialog() == true)
+                        {
+                            _bookmarks.Remove(bookmark);
+                        }
+                    }
+                };
+
+                var editMenuItem = new MenuItem { Header = "Edit Bookmark" };
+                editMenuItem.Click += (s, args) =>
+                {
+                    if (item.DataContext is VideoBookmark bookmark)
+                    {
+                        var initialTime = TimeSpan.FromMilliseconds(bookmark.Time);
+                        var dialog = new EditBookmarkDialog(initialTime) { Owner = this };
+                        if (dialog.ShowDialog() == true)
+                        {
+                            bookmark.Time = (long)dialog.BookmarkTime.TotalMilliseconds;
+                            ReorderAndDeduplicateBookmarks();
+                            BookmarksListBox.Items.Refresh();
+                        }
+                    }
+                };
+
+                contextMenu.Items.Add(removeMenuItem);
+                contextMenu.Items.Add(editMenuItem);
+
+                // Show the context menu at the mouse position
+                contextMenu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
+
+        private void ReorderAndDeduplicateBookmarks()
+        {
+            // Order by Time and remove duplicates (keep first occurrence)
+            var orderedDistinct = new ObservableCollection<VideoBookmark>();
+            var seenTimes = new HashSet<long>();
+
+            foreach (var bm in _bookmarks)
+            {
+                if (seenTimes.Add(bm.Time))
+                {
+                    orderedDistinct.Add(bm);
                 }
             }
+
+            // Sort the collection
+            var sorted = new ObservableCollection<VideoBookmark>(orderedDistinct.OrderBy(b => b.Time));
+
+            // Update the original collection
+            _bookmarks.Clear();
+            foreach (var bm in sorted)
+                _bookmarks.Add(bm);
         }
     }
 }
