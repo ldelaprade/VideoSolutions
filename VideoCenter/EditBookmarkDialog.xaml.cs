@@ -13,14 +13,17 @@ namespace VideoCenter
             Hours.Value = initialTime.Hours;
             Minutes.Value = initialTime.Minutes;
             Seconds.Value = initialTime.Seconds;
+            Millis.Value = initialTime.Milliseconds;
+
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            BookmarkTime = new TimeSpan(
+            BookmarkTime = new TimeSpan(0, // days are not used in bookmarks
                 (int)Hours.Value.GetValueOrDefault(),
                 (int)Minutes.Value.GetValueOrDefault(),
-                (int)Seconds.Value.GetValueOrDefault());
+                (int)Seconds.Value.GetValueOrDefault(),
+                (int)Millis.Value.GetValueOrDefault());
             DialogResult = true;
         }
     }
