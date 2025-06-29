@@ -44,8 +44,11 @@ namespace VideoCenter
         {
             InitializeComponent();
 
-            var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
-            this.Title = $"Video Center {version}";
+            var version = Assembly.GetExecutingAssembly().GetName().Version;
+
+            this.Title = version != null
+                ? $"Video Center {version.Major}.{version.Minor}"
+                : "Video Center ?.?";
 
             // Preferred path to the VLC native libraries
             var preferredLibVlcPath = Path.Combine(AppContext.BaseDirectory, "libvlc", "win-x64");
