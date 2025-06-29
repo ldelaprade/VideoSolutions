@@ -114,6 +114,28 @@ namespace VideoCenter
                 using var media = new Media(_libVLC, dialog.FileName, FromType.FromPath);
                 _mediaPlayer.Play(media);
                 VideoPathText.Text = dialog.FileName; // Update the video path display
+
+                // Load bookmarks if a .bmk file exists
+                string bookmarksFile = dialog.FileName + ".bmk";
+                _bookmarks.Clear();
+                if (File.Exists(bookmarksFile))
+                {
+                    try
+                    {
+                        var lines = File.ReadAllLines(bookmarksFile);
+                        foreach (var line in lines)
+                        {
+                            if (long.TryParse(line, out long time))
+                            {
+                                _bookmarks.Add(new VideoBookmark { Time = time });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to load bookmarks:\n{ex.Message}", "Load Bookmarks", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
         }
 
@@ -353,6 +375,37 @@ namespace VideoCenter
             _bookmarks.Clear();
             foreach (var bm in sorted)
                 _bookmarks.Add(bm);
+        }
+
+        private void SaveBookmarksButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Get the current video path from the UI
+            string videoPath = VideoPathText.Text;
+            if (string.IsNullOrWhiteSpace(videoPath) || !File.Exists(videoPath))
+            {
+                MessageBox.Show("No video is currently loaded.", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Build the bookmarks file path
+            string bookmarksFile = videoPath + ".bmk";
+
+            try
+            {
+                // Save each bookmark time (in milliseconds) as a line
+                var lines = new List<string>();
+                foreach (var bm in _bookmarks)
+                {
+                    lines.Add(bm.Time.ToString());
+                }
+                File.WriteAllLines(bookmarksFile, lines, Encoding.UTF8);
+
+                MessageBox.Show($"Bookmarks saved to:\n{bookmarksFile}", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save bookmarks:\n{ex.Message}", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
     }
 }

@@ -6,12 +6,12 @@
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"        
         xmlns:local="clr-namespace:VideoCenter"
         mc:Ignorable="d"
-        Title="Video Center" Height="450" Width="800">
+        Title="Video Center" Height="450" Width="900">
     <Grid Background="WhiteSmoke">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="5" /> <!-- Splitter width -->
-            <ColumnDefinition Width="250" /> <!-- Right panel width -->
+            <ColumnDefinition Width="300" /> <!-- Right panel width -->
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -86,18 +86,25 @@
         <!-- Bookmarks panel (right side) -->
         <Grid Grid.Column="2" Margin="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/> <!-- Buttons row -->
+                <RowDefinition Height="*"/>    <!-- ListBox fills remaining space -->
             </Grid.RowDefinitions>
-            <Button x:Name="AddBookmarkButton"
-                    Content="Add Bookmark"
-                    Width="120"
-                    Margin="0,0,0,10"
-                    Click="AddBookmarkButton_Click"
-                    Grid.Row="0"/>
-            <ListBox x:Name="BookmarksListBox" Background="WhiteSmoke"
-                     Margin="0"
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <Button x:Name="AddBookmarkButton"
+                        Content="Add Bookmark"
+                        Width="120"
+                        Margin="0,0,4,2"
+                        Click="AddBookmarkButton_Click"/>
+                <Button x:Name="SaveBookmarksButton"
+                        Content="Save Bookmarks"
+                        Margin="0,0,4,2"                        
+                        Width="120"
+                        Click="SaveBookmarksButton_Click"/>
+            </StackPanel>
+            <ListBox x:Name="BookmarksListBox"
                      Grid.Row="1"
+                     Background="WhiteSmoke"
+                     Margin="0"
                      HorizontalAlignment="Stretch"
                      VerticalAlignment="Stretch"
                      SelectionChanged="BookmarksListBox_SelectionChanged"
