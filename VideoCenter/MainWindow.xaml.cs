@@ -110,14 +110,21 @@ namespace VideoCenter
             };
             if (dialog.ShowDialog() == true)
             {
+                // 1. Close the existing video
                 _mediaPlayer.Stop();
+                _mediaPlayer.Media?.Dispose();
+                _mediaPlayer.Media = null;
+
+                // 2. Reset the bookmarks list
+                _bookmarks.Clear();
+
+                // Open the new video
                 using var media = new Media(_libVLC, dialog.FileName, FromType.FromPath);
                 _mediaPlayer.Play(media);
                 VideoPathText.Text = dialog.FileName; // Update the video path display
 
                 // Load bookmarks if a .bmk file exists
                 string bookmarksFile = dialog.FileName + ".bmk";
-                _bookmarks.Clear();
                 if (File.Exists(bookmarksFile))
                 {
                     try
@@ -133,7 +140,7 @@ namespace VideoCenter
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Failed to load bookmarks:\n{ex.Message}", "Load Bookmarks", MessageBoxButton.OK, MessageBoxImage.Error);
+                        SimpleDialog.Show($"Failed to load bookmarks:\n{ex.Message}", false, this, sender as FrameworkElement);
                     }
                 }
             }
