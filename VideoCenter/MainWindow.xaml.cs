@@ -114,9 +114,12 @@ namespace VideoCenter
                 _mediaPlayer.Stop();
                 _mediaPlayer.Media?.Dispose();
                 _mediaPlayer.Media = null;
+                 _isPaused = false;
+                 _videoEndReached = false;
 
                 // 2. Reset the bookmarks list
                 _bookmarks.Clear();
+
 
                 // Open the new video
                 using var media = new Media(_libVLC, dialog.FileName, FromType.FromPath);
