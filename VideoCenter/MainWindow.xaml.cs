@@ -257,9 +257,7 @@ namespace VideoCenter
                 licenseText = "VLC-LICENSE.txt not found.";
             }
 
-            var dialog = new SimpleDialog(licenseText, false, sender as FrameworkElement) {  Owner = this  };
-            dialog.ShowDialog();
-
+            SimpleDialog.Show(licenseText, false, this, sender as FrameworkElement);
         }
 
         private void AddBookmarkButton_Click(object sender, RoutedEventArgs e)
@@ -276,9 +274,8 @@ namespace VideoCenter
                 {
                     if (bm.Time == newBookmark.Time)
                     {
-                        var dialog = new SimpleDialog($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.", 
-                            false, sender as FrameworkElement) { Owner = this };
-                        dialog.ShowDialog();
+                        SimpleDialog.Show($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.", 
+                            false, this, sender as FrameworkElement);
                         return;
                     }
                 }
@@ -321,8 +318,7 @@ namespace VideoCenter
                 {
                     if (item.DataContext is VideoBookmark bookmark)
                     {
-                        var dialog = new SimpleDialog($"Remove bookmark at {bookmark.DisplayText}?", true, item as FrameworkElement) { Owner = this };
-                        if (dialog.ShowDialog() == true)
+                        if (SimpleDialog.Show($"Remove bookmark at {bookmark.DisplayText}?", true, this, item as FrameworkElement) == true)
                         {
                             _bookmarks.Remove(bookmark);
                         }
@@ -383,7 +379,7 @@ namespace VideoCenter
             string videoPath = VideoPathText.Text;
             if (string.IsNullOrWhiteSpace(videoPath) || !File.Exists(videoPath))
             {
-                MessageBox.Show("No video is currently loaded.", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Warning);
+                SimpleDialog.Show("No video is currently loaded.", false, this, sender as FrameworkElement);
                 return;
             }
 
@@ -399,13 +395,13 @@ namespace VideoCenter
                     lines.Add(bm.Time.ToString());
                 }
                 File.WriteAllLines(bookmarksFile, lines, Encoding.UTF8);
-
-                MessageBox.Show($"Bookmarks saved to:\n{bookmarksFile}", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Information);
+                SimpleDialog.Show($"Bookmarks saved to:\n{bookmarksFile}", false, this, sender as FrameworkElement);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to save bookmarks:\n{ex.Message}", "Save Bookmarks", MessageBoxButton.OK, MessageBoxImage.Error);
+                SimpleDialog.Show($"Failed to save bookmarks:\n{ex.Message}", false, this, sender as FrameworkElement);
             }
+
         }
     }
 }

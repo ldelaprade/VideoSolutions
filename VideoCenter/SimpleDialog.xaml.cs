@@ -8,9 +8,10 @@ namespace VideoCenter
 {
     public partial class SimpleDialog : Window
     {
-        public bool? Result { get; private set; }
+        public bool? Result { get; set; }
 
-        public SimpleDialog(string message, bool showCancel = false, FrameworkElement? anchor = null)
+        // Make the constructor private
+        private SimpleDialog(string message, bool showCancel = false, FrameworkElement? anchor = null)
         {
             InitializeComponent();
             CancelButton.Visibility = showCancel ? Visibility.Visible : Visibility.Collapsed;
@@ -91,6 +92,19 @@ namespace VideoCenter
             };
             dialog.ShowDialog();
             return dialog.Result;
+        }
+
+        // Static method for showing the dialog
+        public static bool? Show(string message, bool isConfirmation, Window? owner = null, FrameworkElement? placementTarget = null)
+        {
+            var dialog = placementTarget != null
+                ? new SimpleDialog(message, isConfirmation, placementTarget)
+                : new SimpleDialog(message, isConfirmation, owner);
+
+            if (owner != null)
+                dialog.Owner = owner;
+
+            return dialog.ShowDialog();
         }
     }
 }
