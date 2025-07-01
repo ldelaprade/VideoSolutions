@@ -108,13 +108,16 @@
                      HorizontalAlignment="Stretch"  
                      VerticalAlignment="Stretch"  
                      SelectionChanged="BookmarksListBox_SelectionChanged"  
-                     DisplayMemberPath="DisplayText"  
-                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown">  
-                <ListBox.ItemContainerStyle>  
-                    <Style TargetType="ListBoxItem">  
-                        <!-- ContextMenu Setter removed -->  
-                    </Style>  
-                </ListBox.ItemContainerStyle>  
+                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown"  
+                     MouseDoubleClick="BookmarksListBox_MouseDoubleClick"  
+                     KeyDown="BookmarksListBox_KeyDown">  
+                <ListBox.ItemTemplate>  
+                    <DataTemplate>  
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding DisplayText}"  />
+                        </StackPanel>  
+                    </DataTemplate>  
+                </ListBox.ItemTemplate>  
             </ListBox>  
         </Grid>  
     </Grid>  

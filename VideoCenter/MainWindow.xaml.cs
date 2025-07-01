@@ -39,7 +39,8 @@ namespace VideoCenter
         public class VideoBookmark
         {
             public long Time { get; set; }
-            public string DisplayText => TimeSpan.FromMilliseconds(Time).ToString(@"hh\:mm\:ss\.fff");
+            public string? Description { get; set; }
+            public string DisplayText => $"{TimeSpan.FromMilliseconds(Time):hh\\:mm\\:ss\\.fff} {(string.IsNullOrWhiteSpace(Description) ? "" : "- " + Description)}";
         }
 
         private ObservableCollection<VideoBookmark> _bookmarks = new();
@@ -149,9 +150,11 @@ namespace VideoCenter
                     var lines = File.ReadAllLines(bookmarksFile);
                     foreach (var line in lines)
                     {
-                        if (long.TryParse(line, out long time))
+                        var parts = line.Split('|');
+                        if (long.TryParse(parts[0], out long time))
                         {
-                            _bookmarks.Add(new VideoBookmark { Time = time });
+                            var desc = parts.Length > 1 ? parts[1] : "";
+                            _bookmarks.Add(new VideoBookmark { Time = time, Description = desc });
                         }
                     }
                 }
@@ -406,6 +409,19 @@ namespace VideoCenter
             }
         }
 
+
+        private void EditBookmarkItem(VideoBookmark bookmark)
+        {
+            var initialTime = TimeSpan.FromMilliseconds(bookmark.Time);
+            var dialog = new EditBookmarkDialog(initialTime, bookmark.Description) { Owner = this };
+            if (dialog.ShowDialog() == true)
+            {
+                bookmark.Time = (long)dialog.BookmarkTime.TotalMilliseconds;
+                bookmark.Description = dialog.BookmarkDescription;
+                ReorderAndDeduplicateBookmarks();
+                BookmarksListBox.Items.Refresh();
+            }
+        }
         private void BookmarksListBox_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
             var item = ItemsControl.ContainerFromElement(BookmarksListBox, e.OriginalSource as DependencyObject) as ListBoxItem;
@@ -432,14 +448,7 @@ namespace VideoCenter
                 {
                     if (item.DataContext is VideoBookmark bookmark)
                     {
-                        var initialTime = TimeSpan.FromMilliseconds(bookmark.Time);
-                        var dialog = new EditBookmarkDialog(initialTime) { Owner = this };
-                        if (dialog.ShowDialog() == true)
-                        {
-                            bookmark.Time = (long)dialog.BookmarkTime.TotalMilliseconds;
-                            ReorderAndDeduplicateBookmarks();
-                            BookmarksListBox.Items.Refresh();
-                        }
+                        EditBookmarkItem(bookmark);
                     }
                 };
 
@@ -448,6 +457,26 @@ namespace VideoCenter
 
                 // Show the context menu at the mouse position
                 contextMenu.IsOpen = true;
+                e.Handled = true;
+            }
+        }
+
+        private void BookmarksListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (BookmarksListBox.SelectedItem is VideoBookmark bookmark)
+            {
+                EditBookmarkItem(bookmark);
+            }
+        }
+
+        private void BookmarksListBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete && BookmarksListBox.SelectedItem is VideoBookmark bookmark)
+            {
+                if (SimpleDialog.Show($"Remove bookmark at {bookmark.DisplayText}?", true, this) == true)
+                {
+                    _bookmarks.Remove(bookmark);
+                }
                 e.Handled = true;
             }
         }
@@ -490,11 +519,11 @@ namespace VideoCenter
 
             try
             {
-                // Save each bookmark time (in milliseconds) as a line
+                // Save each bookmark as: time|description
                 var lines = new List<string>();
                 foreach (var bm in _bookmarks)
                 {
-                    lines.Add(bm.Time.ToString());
+                    lines.Add($"{bm.Time}|{bm.Description ?? ""}");
                 }
                 File.WriteAllLines(bookmarksFile, lines, Encoding.UTF8);
                 SimpleDialog.Show($"Bookmarks saved to:\n{bookmarksFile}", false, this, sender as FrameworkElement);

@@ -20,20 +20,22 @@ namespace VideoCenter
             SetMessageWithLinks(message);
 
             // Positioning logic
+            Loaded += (s, e) =>
+            {
+                if (anchor != null)
+                {
+                    var point = anchor.PointToScreen(new Point(0, anchor.ActualHeight));
+                    Left = point.X;
+                    Top = point.Y;
+                }
+                else if (Application.Current?.MainWindow is Window main)
+                {
+                    Left = main.Left + (main.Width - ActualWidth) / 2;
+                    Top = main.Top + (main.Height - ActualHeight) / 2;
+                }
+            };
             WindowStartupLocation = WindowStartupLocation.Manual;
-            if (anchor != null)
-            {
-                // Try to position below the anchor element
-                var point = anchor.PointToScreen(new Point(0, anchor.ActualHeight));
-                Left = point.X;
-                Top = point.Y;
-            }
-            else if (Application.Current?.MainWindow is Window main)
-            {
-                // Center in main window
-                Left = main.Left + (main.Width - Width) / 2;
-                Top = main.Top + (main.Height - Height) / 2;
-            }
+
         }
 
         private void SetMessageWithLinks(string message)
@@ -97,9 +99,7 @@ namespace VideoCenter
         // Static method for showing the dialog
         public static bool? Show(string message, bool isConfirmation, Window? owner = null, FrameworkElement? placementTarget = null)
         {
-            var dialog = placementTarget != null
-                ? new SimpleDialog(message, isConfirmation, placementTarget)
-                : new SimpleDialog(message, isConfirmation, owner);
+            var dialog = new SimpleDialog(message, isConfirmation, placementTarget);
 
             if (owner != null)
                 dialog.Owner = owner;

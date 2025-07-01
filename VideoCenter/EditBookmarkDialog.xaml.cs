@@ -6,14 +6,17 @@ namespace VideoCenter
     public partial class EditBookmarkDialog : Window
     {
         public TimeSpan BookmarkTime { get; private set; }
+        public string BookmarkDescription { get; set; }
 
-        public EditBookmarkDialog(TimeSpan initialTime)
+        public EditBookmarkDialog(TimeSpan initialTime, string? initialDescription)
         {
             InitializeComponent();
             Hours.Value = initialTime.Hours;
             Minutes.Value = initialTime.Minutes;
             Seconds.Value = initialTime.Seconds;
             Millis.Value = initialTime.Milliseconds;
+            BookmarkDescription = initialDescription ?? "";
+            DataContext = this;
 
         }
 
