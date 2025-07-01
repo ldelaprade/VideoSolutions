@@ -11,6 +11,7 @@
     <ApplicationManifest>.\app.manifest</ApplicationManifest>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Title>Video Center</Title>
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -34,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="AppIcon.ico" />
     <Content Include="VLC-LICENSE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

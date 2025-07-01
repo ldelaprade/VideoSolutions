@@ -31,6 +31,10 @@ namespace VideoCenter
         private WindowState _previousWindowState;
         private WindowStyle _previousWindowStyle;
         private ResizeMode _previousResizeMode;
+        private double _lastLeft;
+        private double _lastTop;
+        private double _lastWidth;
+        private double _lastHeight;
 
         public class VideoBookmark
         {
@@ -45,7 +49,6 @@ namespace VideoCenter
             InitializeComponent();
 
             var version = Assembly.GetExecutingAssembly().GetName().Version;
-
             this.Title = version != null
                 ? $"Video Center {version.Major}.{version.Minor}"
                 : "Video Center ?.?";
@@ -68,7 +71,6 @@ namespace VideoCenter
             _libVLC = new LibVLC();
 
             _mediaPlayer = new MediaPlayer(_libVLC);
-
             videoView.MediaPlayer = _mediaPlayer;
 
             // Set initial volume to 0 for both MediaPlayer and Slider
@@ -85,6 +87,83 @@ namespace VideoCenter
             _timer.Start();
 
             BookmarksListBox.ItemsSource = _bookmarks;
+
+            // Check for command-line argument (video file path and window state)
+            string[] args = Environment.GetCommandLineArgs();
+            var toFullScreen = false;
+            if (args.Length > 1 && File.Exists(args[1]))
+            {
+                // Restore window state if provided
+                if (args.Length >= 7)
+                {
+                    toFullScreen = (args[6] == "1");
+
+                    if (double.TryParse(args[2], out double left)) _lastLeft = left;
+                    if (double.TryParse(args[3], out double top)) _lastTop = top;
+                    if (double.TryParse(args[4], out double width)) _lastWidth = width;
+                    if (double.TryParse(args[5], out double height)) _lastHeight = height;
+
+                    this.Left = _lastLeft;
+                    this.Top = _lastTop;
+                    this.Width = _lastWidth;
+                    this.Height = _lastHeight;
+                    
+                }
+                OpenVideo(args[1]);
+            }
+
+            // Initialize with current values
+            _lastLeft = this.Left;
+            _lastTop = this.Top;
+            _lastWidth = this.Width;
+            _lastHeight = this.Height;
+
+            this.LocationChanged += MainWindow_LocationOrSizeChanged;
+            this.SizeChanged += MainWindow_LocationOrSizeChanged;
+
+            if(toFullScreen) ToFullscreen();
+        }
+
+        private void MainWindow_LocationOrSizeChanged(object? sender, EventArgs e)
+        {
+            if (!_isFullscreen && this.WindowState == WindowState.Normal)
+            {
+                _lastLeft = this.Left;
+                _lastTop = this.Top;
+                _lastWidth = this.Width;
+                _lastHeight = this.Height;
+            }
+        }
+
+        private void OpenVideo(string videoPath)
+        {
+            VideoPathText.Text = videoPath;
+
+            // Load bookmarks if a .bmk file exists
+            string bookmarksFile = videoPath + ".bmk";
+            _bookmarks.Clear();
+            if (File.Exists(bookmarksFile))
+            {
+                try
+                {
+                    var lines = File.ReadAllLines(bookmarksFile);
+                    foreach (var line in lines)
+                    {
+                        if (long.TryParse(line, out long time))
+                        {
+                            _bookmarks.Add(new VideoBookmark { Time = time });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    SimpleDialog.Show($"Failed to load bookmarks:\n{ex.Message}", false, this, null);
+                }
+            }
+
+            using var media = new Media(_libVLC, videoPath, FromType.FromPath);
+            media.AddOption(":video-background=0xFFFFFF");
+            _mediaPlayer.Play(media);
         }
 
         private void MediaPlayer_EndReached(object? sender, EventArgs e)
@@ -110,49 +189,42 @@ namespace VideoCenter
             };
             if (dialog.ShowDialog() == true)
             {
-                // 1. Close the existing video
-                _mediaPlayer.Stop();
-                _mediaPlayer.Media?.Dispose();
-                _mediaPlayer.Media = null;
-                 _isPaused = false;
-                 _videoEndReached = false;
-
-                // 2. Reset the bookmarks list
-                _bookmarks.Clear();
-
-
-                // Open the new video
-                using var media = new Media(_libVLC, dialog.FileName, FromType.FromPath);
-                _mediaPlayer.Play(media);
-                VideoPathText.Text = dialog.FileName; // Update the video path display
-
-                // Load bookmarks if a .bmk file exists
-                string bookmarksFile = dialog.FileName + ".bmk";
-                if (File.Exists(bookmarksFile))
+                if (_mediaPlayer.Media == null)
                 {
-                    try
+                    OpenVideo(dialog.FileName);
+                }
+                else
+                {
+                    // Start a new instance of the app with the selected file as argument
+                    // Because closing current video makes VLD crash sometimes
+                    string videoPath = dialog.FileName;
+                    string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName!;
+
+                    // Gather window state
+                    var left = _lastLeft;
+                    var top = _lastTop;
+                    var width = _lastWidth;
+                    var height = _lastHeight;
+                    var isFullscreen = _isFullscreen ? "1" : "0";
+
+                    // Use ProcessStartInfo for better control (quotes for spaces in path)
+                    var psi = new System.Diagnostics.ProcessStartInfo
                     {
-                        var lines = File.ReadAllLines(bookmarksFile);
-                        foreach (var line in lines)
-                        {
-                            if (long.TryParse(line, out long time))
-                            {
-                                _bookmarks.Add(new VideoBookmark { Time = time });
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        SimpleDialog.Show($"Failed to load bookmarks:\n{ex.Message}", false, this, sender as FrameworkElement);
-                    }
+                        FileName = exePath,
+                        Arguments = $"\"{videoPath}\" {left} {top} {width} {height} {isFullscreen}"
+
+                    };
+                    System.Diagnostics.Process.Start(psi);
+
+                    // Shutdown current app
+                    Application.Current.Shutdown();
                 }
             }
         }
 
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_mediaPlayer.Media != null)
-                _mediaPlayer.Play();
+            if (_mediaPlayer.Media != null)  _mediaPlayer.Play();
             _isPaused = false;
             _videoEndReached = false;
         }
@@ -188,14 +260,30 @@ namespace VideoCenter
 
         private void MediaPlayer_TimeChanged(object? sender, MediaPlayerTimeChangedEventArgs e)
         {
-            Dispatcher.Invoke(() =>
+            try
             {
-                if (!_isDraggingSeekBar)
+                Dispatcher.Invoke(() =>
                 {
-                    SeekBar.Value = e.Time;
-                }
-                UpdateTimeText();
-            });
+                    try
+                    {
+                        if (!_isDraggingSeekBar)
+                        {
+                            SeekBar.Value = e.Time;
+                        }
+                        UpdateTimeText();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Optionally log or handle UI thread exceptions here
+                        SimpleDialog.Show($"Error updating time: {ex.Message}", false, this, null);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Optionally log or handle Dispatcher.Invoke exceptions here
+                SimpleDialog.Show($"Dispatcher error: {ex.Message}", false, this, null);
+            }
         }
 
         private void Timer_Tick(object? sender, EventArgs e)
@@ -222,7 +310,7 @@ namespace VideoCenter
             _isDraggingSeekBar = false;
         }
 
-        private void FullscreenButton_Click(object sender, RoutedEventArgs e)
+        private void ToFullscreen()
         {
             if (!_isFullscreen)
             {
@@ -244,6 +332,10 @@ namespace VideoCenter
             // Force redraw
             this.InvalidateVisual();
             this.UpdateLayout();
+        }
+        private void FullscreenButton_Click(object sender, RoutedEventArgs e)
+        {
+            ToFullscreen();
         }
 
         private void UpdateTimeText()
