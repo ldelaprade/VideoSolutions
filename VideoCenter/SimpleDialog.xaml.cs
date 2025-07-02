@@ -1,13 +1,24 @@
+using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Interop;
 
 namespace VideoCenter
 {
     public partial class SimpleDialog : Window
     {
+
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
         public bool? Result { get; set; }
 
         // Make the constructor private
@@ -22,6 +33,8 @@ namespace VideoCenter
             // Positioning logic
             Loaded += (s, e) =>
             {
+                RemoveCloseButton();
+
                 if (anchor != null)
                 {
                     var point = anchor.PointToScreen(new Point(0, anchor.ActualHeight));
@@ -35,7 +48,15 @@ namespace VideoCenter
                 }
             };
             WindowStartupLocation = WindowStartupLocation.Manual;
+        }
 
+        private void RemoveCloseButton()
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+            const int GWL_STYLE = -16;
+            const int WS_SYSMENU = 0x80000;
+            int style = GetWindowLong(hwnd, GWL_STYLE);
+            SetWindowLong(hwnd, GWL_STYLE, style & ~WS_SYSMENU);
         }
 
         private void SetMessageWithLinks(string message)
@@ -96,15 +117,37 @@ namespace VideoCenter
             return dialog.Result;
         }
 
-        // Static method for showing the dialog
-        public static bool? Show(string message, bool isConfirmation, Window? owner = null, FrameworkElement? placementTarget = null)
+        // Static methods for showing the dialog
+
+        public static bool? Show(string title, string message, bool isConfirmation, Window? owner, FrameworkElement? placementTarget)
         {
             var dialog = new SimpleDialog(message, isConfirmation, placementTarget);
+            dialog.Title = title;
 
             if (owner != null)
                 dialog.Owner = owner;
 
             return dialog.ShowDialog();
+        }
+
+        public static bool? Info(string message, Window? owner = null, FrameworkElement? placementTarget = null)
+        {
+            return Show("Information", message, false, owner, placementTarget);
+        }
+
+        public static bool? Warning(string message, Window? owner = null, FrameworkElement? placementTarget = null)
+        {
+            return Show("Warning", message, false, owner, placementTarget);
+        }
+
+        public static bool? Error(string message, Window? owner = null, FrameworkElement? placementTarget = null)
+        {
+            return Show("Error", message, false, owner, placementTarget);
+        }
+
+        public static bool? Confirm(string message, Window? owner = null, FrameworkElement? placementTarget = null)
+        {
+            return Show("Please confirm", message, true, owner, placementTarget);
         }
     }
 }

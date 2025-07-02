@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -42,6 +43,7 @@ namespace VideoCenter
         private ObservableCollection<VideoBookmark> _bookmarks = new();
 
         public MainWindow()
+
         {
             InitializeComponent();
 
@@ -64,7 +66,6 @@ namespace VideoCenter
 
             // Initialize LibVLC with the selected path
             Core.Initialize(libVlcPathToUse);
-
             _libVLC = new LibVLC();
 
             _mediaPlayer = new MediaPlayer(_libVLC);
@@ -134,6 +135,13 @@ namespace VideoCenter
 
         private void OpenVideo(string videoPath)
         {
+
+            if (!File.Exists(videoPath))
+            {
+                SimpleDialog.Info("Video file not found.");
+                return;
+            }
+
             VideoPathText.Text = videoPath;
 
             // Load bookmarks if a .bmk file exists
@@ -156,12 +164,21 @@ namespace VideoCenter
                 }
                 catch (Exception ex)
                 {
-                    SimpleDialog.Show($"Failed to load bookmarks:\n{ex.Message}", false, this, null);
+                    SimpleDialog.Warning($"Failed to load bookmarks:\n{ex.Message}");
                 }
             }
 
-            using var media = new Media(_libVLC, videoPath, FromType.FromPath, ":video-background=0xFFFFFF", ":video-foreground=0xFFFFFF");
-            _mediaPlayer.Play(media);
+            try
+            {
+                var media = new Media(_libVLC, videoPath, FromType.FromPath, ":video-background=0xFFFFFF", ":video-foreground=0xFFFFFF");
+                _mediaPlayer.Play(media);
+            }
+            catch (Exception ex)
+            {
+                // Handle VLC playback errors
+                SimpleDialog.Error($"Error playing video: {ex.Message}");
+            }
+
         }
 
         private void MediaPlayer_EndReached(object? sender, EventArgs e)
@@ -196,7 +213,7 @@ namespace VideoCenter
                 else
                 {
                     // Start a new instance of the app with the selected file as argument
-                    // Because closing current video makes VLD crash sometimes
+                    // Because closing current video makes VLC crash sometimes (looks like it is impossible to cleanly avoid VLC deadlocks)
                     string videoPath = dialog.FileName;
                     string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName!;
 
@@ -217,6 +234,7 @@ namespace VideoCenter
                     System.Diagnostics.Process.Start(psi);
 
                     // Shutdown current app
+                    Thread.Sleep(1000); // Wait for the new instance to start
                     Application.Current.Shutdown();
                 }
             }
@@ -275,14 +293,14 @@ namespace VideoCenter
                     catch (Exception ex)
                     {
                         // Optionally log or handle UI thread exceptions here
-                        SimpleDialog.Show($"Error updating time: {ex.Message}", false, this, null);
+                        SimpleDialog.Warning($"Error updating time: {ex.Message}");
                     }
                 });
             }
             catch (Exception ex)
             {
                 // Optionally log or handle Dispatcher.Invoke exceptions here
-                SimpleDialog.Show($"Dispatcher error: {ex.Message}", false, this, null);
+                SimpleDialog.Error($"Dispatcher error: {ex.Message}");
             }
         }
 
@@ -359,7 +377,7 @@ namespace VideoCenter
                 licenseText = "VLC-LICENSE.txt not found.";
             }
 
-            SimpleDialog.Show(licenseText, false, this);
+            SimpleDialog.Info(licenseText);
         }
 
         private void AddBookmarkButton_Click(object sender, RoutedEventArgs e)
@@ -376,8 +394,7 @@ namespace VideoCenter
                 {
                     if (bm.Time == newBookmark.Time)
                     {
-                        SimpleDialog.Show($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.",
-                            false, this, sender as FrameworkElement);
+                        SimpleDialog.Warning($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.", this, sender as FrameworkElement);
                         return;
                     }
                 }
@@ -433,7 +450,7 @@ namespace VideoCenter
                 {
                     if (item.DataContext is VideoBookmark bookmark)
                     {
-                        if (SimpleDialog.Show($"Remove bookmark at {bookmark.DisplayText}?", true, this, item as FrameworkElement) == true)
+                        if (SimpleDialog.Confirm($"Remove bookmark at {bookmark.DisplayText}?", this, item as FrameworkElement) == true)
                         {
                             _bookmarks.Remove(bookmark);
                         }
@@ -470,7 +487,7 @@ namespace VideoCenter
         {
             if (e.Key == Key.Delete && BookmarksListBox.SelectedItem is VideoBookmark bookmark)
             {
-                if (SimpleDialog.Show($"Remove bookmark at {bookmark.DisplayText}?", true, this) == true)
+                if (SimpleDialog.Confirm($"Remove bookmark at {bookmark.DisplayText}?") == true)
                 {
                     _bookmarks.Remove(bookmark);
                 }
@@ -507,7 +524,7 @@ namespace VideoCenter
             string videoPath = VideoPathText.Text;
             if (string.IsNullOrWhiteSpace(videoPath) || !File.Exists(videoPath))
             {
-                SimpleDialog.Show("No video is currently loaded.", false, this, sender as FrameworkElement);
+                SimpleDialog.Info("No video is currently loaded.", this, sender as FrameworkElement);
                 return;
             }
 
@@ -523,13 +540,24 @@ namespace VideoCenter
                     lines.Add($"{bm.Time}|{bm.Description ?? ""}");
                 }
                 File.WriteAllLines(bookmarksFile, lines, Encoding.UTF8);
-                SimpleDialog.Show($"Bookmarks saved to:\n{bookmarksFile}", false, this, sender as FrameworkElement);
+                SimpleDialog.Info($"Bookmarks saved to:\n{bookmarksFile}", this, sender as FrameworkElement);
             }
             catch (Exception ex)
             {
-                SimpleDialog.Show($"Failed to save bookmarks:\n{ex.Message}", false, this, sender as FrameworkElement);
+                SimpleDialog.Error($"Failed to save bookmarks:\n{ex.Message}", this, sender as FrameworkElement);
             }
 
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+
+            if (_isFullscreen && e.Key == Key.Escape)
+            {
+                ToFullscreen(); // This toggles fullscreen off
+                e.Handled = true;
+            }
         }
     }
 }
