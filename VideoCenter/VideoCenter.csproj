@@ -3,26 +3,25 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <Version>1.2.1.0</Version>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
     <ApplicationManifest>.\app.manifest</ApplicationManifest>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Title>Video Center</Title>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+    <SupportedOSPlatformVersion>10.0.26100.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <IsPublishable>True</IsPublishable>
-  </PropertyGroup>
+	<PropertyGroup>
+	  <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+	</PropertyGroup>
+
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IsPublishable>True</IsPublishable>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <IsPublishable>True</IsPublishable>
   </PropertyGroup>
 
@@ -31,11 +30,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="VLC-LICENSE.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="AppIcon.ico" />
+    <DesignData Include="AppIcon.ico" />
+    <Content Include="AssemblyInfo.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="VLC-LICENSE.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -44,6 +50,7 @@
   <ItemGroup>
     <PackageReference Include="Extended.Wpf.Toolkit" Version="4.7.25104.5739" />
     <PackageReference Include="LibVLCSharp.WPF" Version="3.9.3" />
+    <PackageReference Include="System.Windows.Extensions" Version="9.0.6" />
     <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.21" />
   </ItemGroup>
 

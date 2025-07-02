@@ -1,18 +1,14 @@
 ﻿using LibVLCSharp.Shared;
-using LibVLCSharp.WPF;
 using Microsoft.Win32;
-using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-
 using System.Windows.Threading;
-using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace VideoCenter
 {
@@ -108,7 +104,7 @@ namespace VideoCenter
                     this.Top = _lastTop;
                     this.Width = _lastWidth;
                     this.Height = _lastHeight;
-                    
+
                 }
                 OpenVideo(args[1]);
             }
@@ -122,7 +118,7 @@ namespace VideoCenter
             this.LocationChanged += MainWindow_LocationOrSizeChanged;
             this.SizeChanged += MainWindow_LocationOrSizeChanged;
 
-            if(toFullScreen) ToFullscreen();
+            if (toFullScreen) ToFullscreen();
         }
 
         private void MainWindow_LocationOrSizeChanged(object? sender, EventArgs e)
@@ -164,8 +160,7 @@ namespace VideoCenter
                 }
             }
 
-            using var media = new Media(_libVLC, videoPath, FromType.FromPath);
-            media.AddOption(":video-background=0xFFFFFF");
+            using var media = new Media(_libVLC, videoPath, FromType.FromPath, ":video-background=0xFFFFFF", ":video-foreground=0xFFFFFF");
             _mediaPlayer.Play(media);
         }
 
@@ -183,6 +178,8 @@ namespace VideoCenter
             PauseButton.IsEnabled = (_mediaPlayer.Media != null);
             StopButton.IsEnabled = (_mediaPlayer.Media != null);
         }
+
+
 
         private void OpenButton_Click(object sender, RoutedEventArgs e)
         {
@@ -227,7 +224,7 @@ namespace VideoCenter
 
         private void PlayButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_mediaPlayer.Media != null)  _mediaPlayer.Play();
+            if (_mediaPlayer.Media != null) _mediaPlayer.Play();
             _isPaused = false;
             _videoEndReached = false;
         }
@@ -362,7 +359,7 @@ namespace VideoCenter
                 licenseText = "VLC-LICENSE.txt not found.";
             }
 
-            SimpleDialog.Show(licenseText, false, this, sender as FrameworkElement);
+            SimpleDialog.Show(licenseText, false, this);
         }
 
         private void AddBookmarkButton_Click(object sender, RoutedEventArgs e)
@@ -379,7 +376,7 @@ namespace VideoCenter
                 {
                     if (bm.Time == newBookmark.Time)
                     {
-                        SimpleDialog.Show($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.", 
+                        SimpleDialog.Show($"A bookmark at {TimeSpan.FromMilliseconds(currentTime):hh\\:mm\\:ss} already exists.",
                             false, this, sender as FrameworkElement);
                         return;
                     }
@@ -400,7 +397,7 @@ namespace VideoCenter
             if (BookmarksListBox.SelectedItem is VideoBookmark bookmark)
             {
                 if (!_isPaused)
-                { 
+                {
                     _mediaPlayer.Stop();
                     _mediaPlayer.Play();
                     _videoEndReached = false;

@@ -1,5 +1,5 @@
-This application uses VLC, which is licensed under the GNU Lesser General Public License (LGPL).
 
+This OpenSource WPF application is hosted on github: https://github.com/ldelaprade/VideoSolutions
+Videos are played using VLC which is licensed under the GNU Lesser General Public License (LGPL).
 You can obtain the VLC source code at: https://www.videolan.org/vlc/
-
 You can read the full LGPL license text at: https://www.gnu.org/licenses/lgpl-2.1.html
