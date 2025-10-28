@@ -5,120 +5,146 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
         xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"        
         xmlns:local="clr-namespace:VideoCenter"  
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         mc:Ignorable="d"  
-        Title="Video Center" Height="450" Width="900">  
-    <Grid Background="WhiteSmoke">  
-        <Grid.ColumnDefinitions>  
-            <ColumnDefinition Width="*" />  
-            <ColumnDefinition Width="5" /> <!-- Splitter width -->  
-            <ColumnDefinition Width="300" /> <!-- Right panel width -->  
-        </Grid.ColumnDefinitions>  
-        <Grid.RowDefinitions>  
-            <RowDefinition Height="*" />  
-        </Grid.RowDefinitions>  
-  
-        <!-- Main video and controls (left side) -->  
-        <Grid Grid.Column="0">  
-            <Grid.RowDefinitions>  
-                <RowDefinition Height="*" />  
-                <RowDefinition Height="Auto" />  
-                <RowDefinition Height="Auto" /> <!-- New row for the path display -->  
-            </Grid.RowDefinitions>  
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="True"
+        Title="Video Center" Height="450" Width="900"
+        shell:WindowChrome.WindowChrome="{StaticResource MyWindowChrome}">
+    <Border BorderThickness="10" BorderBrush="DarkGreen">
+        <Grid Background="WhiteSmoke">  
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/> <!-- Title bar row -->
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>  
+                <ColumnDefinition Width="*" />  
+                <ColumnDefinition Width="5" /> <!-- Splitter width -->  
+                <ColumnDefinition Width="300" /> <!-- Right panel width -->  
+            </Grid.ColumnDefinitions>  
 
-                <vlc:VideoView x:Name="videoView" Background="WhiteSmoke"   Grid.Row="0"
+            <!-- Custom Title Bar -->
+            <Border Grid.Row="0" Grid.ColumnSpan="3" Background="DarkGreen" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <DockPanel LastChildFill="True" Height="40">
+
+                    <Button  x:Name="CloseButton" Content="✕"  Width="40" Height="32" Margin="0" VerticalAlignment="Stretch"
+                            Background="Transparent" Foreground="White" FontSize="16" BorderThickness="0"
+                            Cursor="Hand" Click="CloseButton_Click"/>
+                    <TextBlock Text="Video Center" Foreground="White" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Main video and controls (left side) -->  
+            <Grid Grid.Row="1" Grid.Column="0">  
+                <Grid.RowDefinitions>  
+                    <RowDefinition Height="*" />  
+                    <RowDefinition Height="Auto" />  
+                    <RowDefinition Height="Auto" /> <!-- New row for the path display -->  
+                </Grid.RowDefinitions>
+
+
+                <Border Grid.Row="0"  Background="pink"  BorderThickness="15" BorderBrush="Transparent" >
+
+                    <vlc:VideoView x:Name="videoView" Background="WhiteSmoke"  
                                HorizontalAlignment="Stretch"  
                                VerticalAlignment="Stretch"  
-                               Margin="0" />  
+                               Margin="0" />
 
-            <!-- Video path display -->  
-            <TextBlock x:Name="VideoPathText"  
-                       Grid.Row="1"  
-                       Margin="0,0,0,4"  
-                       FontSize="12"  
-                       Foreground="DimGray"  
-                       TextTrimming="CharacterEllipsis"  
-                       VerticalAlignment="Center"  
-                       HorizontalAlignment="Stretch"  
-                       Text=""  
-                       />  
-  
-            <!-- Control Bar -->  
-            <StackPanel Grid.Row="2" Orientation="Vertical" Margin="10">  
-                <Grid>  
-                    <Grid.ColumnDefinitions>  
-                        <ColumnDefinition Width="Auto"/>  
-                        <ColumnDefinition Width="Auto"/>  
-                        <ColumnDefinition Width="Auto"/>  
-                        <ColumnDefinition Width="Auto"/>  
-                        <ColumnDefinition Width="Auto"/>  
-                        <ColumnDefinition Width="120"/>  
-                        <ColumnDefinition Width="*"/>  
-                        <ColumnDefinition Width="Auto"/>  
-                    </Grid.ColumnDefinitions>  
-                    <Button x:Name="OpenButton" Content="Open" Width="60" Margin="0,0,5,0" Click="OpenButton_Click" Grid.Column="0"/>  
-                    <Button x:Name="PlayButton" Content="Play" Width="60" Margin="0,0,5,0" Click="PlayButton_Click" Grid.Column="1"/>  
-                    <Button x:Name="PauseButton" Content="Pause" Width="60" Margin="0,0,5,0" Click="PauseButton_Click" Grid.Column="2"/>  
-                    <Button x:Name="StopButton" Content="Stop" Width="60" Margin="0,0,5,0" Click="StopButton_Click" Grid.Column="3"/>  
-                    <Button x:Name="FullscreenButton" Content="Fullscreen" Width="80" Margin="0,0,5,0" Click="FullscreenButton_Click" Grid.Column="4"/>  
-                    <TextBlock x:Name="TimeText" Width="120" Margin="10,0,0,0" VerticalAlignment="Center" Text="00:00 / 00:00" Grid.Column="5"/>  
-                    <!-- Spacer column (Grid.Column="6") -->  
-                    <Button x:Name="InfospButton" Content="?" Width="40" Click="AboutMenuItem_Click" Grid.Column="7" HorizontalAlignment="Right"/>  
-                </Grid>  
-                <Slider x:Name="SeekBar" Minimum="0" Maximum="100" Value="0" Height="20" Margin="0,5,0,0"  
-                        PreviewMouseDown="SeekBar_PreviewMouseDown"  
-                        PreviewMouseUp="SeekBar_PreviewMouseUp"/>  
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,5,0,0">  
-                    <TextBlock Text="Volume" VerticalAlignment="Center" Margin="0,0,5,0"/>  
-                    <Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Value="0" Width="120" ValueChanged="VolumeSlider_ValueChanged"/>  
+                </Border>
+ 
+    
+                <!-- Video path display -->  
+                <TextBlock x:Name="VideoPathText"  
+                           Grid.Row="1"  
+                           Margin="0,0,0,4"  
+                           FontSize="12"  
+                           Foreground="DimGray"  
+                           TextTrimming="CharacterEllipsis"  
+                           VerticalAlignment="Center"  
+                           HorizontalAlignment="Stretch"  
+                           Text=""  
+                           />  
+      
+                <!-- Control Bar -->  
+                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="10">  
+                    <Grid>  
+                        <Grid.ColumnDefinitions>  
+                            <ColumnDefinition Width="Auto"/>  
+                            <ColumnDefinition Width="Auto"/>  
+                            <ColumnDefinition Width="Auto"/>  
+                            <ColumnDefinition Width="Auto"/>  
+                            <ColumnDefinition Width="Auto"/>  
+                            <ColumnDefinition Width="120"/>  
+                            <ColumnDefinition Width="*"/>  
+                            <ColumnDefinition Width="Auto"/>  
+                        </Grid.ColumnDefinitions>  
+                        <Button x:Name="OpenButton" Content="Open" Width="60" Margin="0,0,5,0" Click="OpenButton_Click" Grid.Column="0"/>  
+                        <Button x:Name="PlayButton" Content="Play" Width="60" Margin="0,0,5,0" Click="PlayButton_Click" Grid.Column="1"/>  
+                        <Button x:Name="PauseButton" Content="Pause" Width="60" Margin="0,0,5,0" Click="PauseButton_Click" Grid.Column="2"/>  
+                        <Button x:Name="StopButton" Content="Stop" Width="60" Margin="0,0,5,0" Click="StopButton_Click" Grid.Column="3"/>  
+                        <Button x:Name="FullscreenButton" Content="Fullscreen" Width="80" Margin="0,0,5,0" Click="FullscreenButton_Click" Grid.Column="4"/>  
+                        <TextBlock x:Name="TimeText" Width="120" Margin="10,0,0,0" VerticalAlignment="Center" Text="00:00 / 00:00" Grid.Column="5"/>  
+                        <!-- Spacer column (Grid.Column="6") -->  
+                        <Button x:Name="InfospButton" Content="?" Width="40" Click="AboutMenuItem_Click" Grid.Column="7" HorizontalAlignment="Right"/>  
+                    </Grid>  
+                    <Slider x:Name="SeekBar" Minimum="0" Maximum="100" Value="0" Height="20" Margin="0,5,0,0"  
+                            PreviewMouseDown="SeekBar_PreviewMouseDown"  
+                            PreviewMouseUp="SeekBar_PreviewMouseUp"/>  
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,5,0,0">  
+                        <TextBlock Text="Volume" VerticalAlignment="Center" Margin="0,0,5,0"/>  
+                        <Slider x:Name="VolumeSlider" Minimum="0" Maximum="100" Value="0" Width="120" ValueChanged="VolumeSlider_ValueChanged"/>  
+                    </StackPanel>  
                 </StackPanel>  
-            </StackPanel>  
+            </Grid>  
+      
+            <!-- Splitter between video and bookmarks -->  
+            <GridSplitter Grid.Row="1" Grid.Column="1"  
+                          Width="5"  
+                          HorizontalAlignment="Stretch"  
+                          VerticalAlignment="Stretch"  
+                          ResizeBehavior="PreviousAndNext"  
+                          Background="#DDD"  
+                          ShowsPreview="True"/>  
+      
+            <!-- Bookmarks panel (right side) -->  
+            <Grid Grid.Row="1" Grid.Column="2" Margin="10">  
+                <Grid.RowDefinitions>  
+                    <RowDefinition Height="Auto"/> <!-- Buttons row -->  
+                    <RowDefinition Height="*"/>    <!-- ListBox fills remaining space -->  
+                </Grid.RowDefinitions>  
+                <StackPanel Grid.Row="0" Orientation="Horizontal">  
+                    <Button x:Name="AddBookmarkButton"  
+                            Content="Add Bookmark"  
+                            Width="120"  
+                            Margin="0,0,4,2"  
+                            Click="AddBookmarkButton_Click"/>  
+                    <Button x:Name="SaveBookmarksButton"  
+                            Content="Save Bookmarks"  
+                            Margin="0,0,4,2"                        
+                            Width="120"  
+                            Click="SaveBookmarksButton_Click"/>  
+                </StackPanel>  
+                <ListBox x:Name="BookmarksListBox"  
+                         Grid.Row="1"  
+                         Background="WhiteSmoke"  
+                         Margin="0"  
+                         HorizontalAlignment="Stretch"  
+                         VerticalAlignment="Stretch"  
+                         SelectionChanged="BookmarksListBox_SelectionChanged"  
+                         PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown"  
+                         MouseDoubleClick="BookmarksListBox_MouseDoubleClick"  
+                         KeyDown="BookmarksListBox_KeyDown">  
+                    <ListBox.ItemTemplate>  
+                        <DataTemplate>  
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayText}"  />
+                            </StackPanel>  
+                        </DataTemplate>  
+                    </ListBox.ItemTemplate>  
+                </ListBox>  
+            </Grid>  
         </Grid>  
-  
-        <!-- Splitter between video and bookmarks -->  
-        <GridSplitter Grid.Column="1"  
-                      Width="5"  
-                      HorizontalAlignment="Stretch"  
-                      VerticalAlignment="Stretch"  
-                      ResizeBehavior="PreviousAndNext"  
-                      Background="#DDD"  
-                      ShowsPreview="True"/>  
-  
-        <!-- Bookmarks panel (right side) -->  
-        <Grid Grid.Column="2" Margin="10">  
-            <Grid.RowDefinitions>  
-                <RowDefinition Height="Auto"/> <!-- Buttons row -->  
-                <RowDefinition Height="*"/>    <!-- ListBox fills remaining space -->  
-            </Grid.RowDefinitions>  
-            <StackPanel Grid.Row="0" Orientation="Horizontal">  
-                <Button x:Name="AddBookmarkButton"  
-                        Content="Add Bookmark"  
-                        Width="120"  
-                        Margin="0,0,4,2"  
-                        Click="AddBookmarkButton_Click"/>  
-                <Button x:Name="SaveBookmarksButton"  
-                        Content="Save Bookmarks"  
-                        Margin="0,0,4,2"                        
-                        Width="120"  
-                        Click="SaveBookmarksButton_Click"/>  
-            </StackPanel>  
-            <ListBox x:Name="BookmarksListBox"  
-                     Grid.Row="1"  
-                     Background="WhiteSmoke"  
-                     Margin="0"  
-                     HorizontalAlignment="Stretch"  
-                     VerticalAlignment="Stretch"  
-                     SelectionChanged="BookmarksListBox_SelectionChanged"  
-                     PreviewMouseRightButtonDown="BookmarksListBox_PreviewMouseRightButtonDown"  
-                     MouseDoubleClick="BookmarksListBox_MouseDoubleClick"  
-                     KeyDown="BookmarksListBox_KeyDown">  
-                <ListBox.ItemTemplate>  
-                    <DataTemplate>  
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayText}"  />
-                        </StackPanel>  
-                    </DataTemplate>  
-                </ListBox.ItemTemplate>  
-            </ListBox>  
-        </Grid>  
-    </Grid>  
+    </Border>
 </Window>
+

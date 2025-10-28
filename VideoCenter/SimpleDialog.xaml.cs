@@ -35,17 +35,18 @@ namespace VideoCenter
             {
                 RemoveCloseButton();
 
-                if (anchor != null)
-                {
-                    var point = anchor.PointToScreen(new Point(0, anchor.ActualHeight));
-                    Left = point.X;
-                    Top = point.Y;
-                }
-                else if (Application.Current?.MainWindow is Window main)
+                if (Application.Current?.MainWindow is Window main)
                 {
                     Left = main.Left + (main.Width - ActualWidth) / 2;
                     Top = main.Top + (main.Height - ActualHeight) / 2;
                 }
+                if (anchor != null)
+                {
+                    var point = anchor.PointToScreen(new Point(0, 0));
+                    Left = point.X / 2;
+                    Top = point.Y / 2;
+                }
+
             };
             WindowStartupLocation = WindowStartupLocation.Manual;
         }

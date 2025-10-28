@@ -4,6 +4,12 @@
              xmlns:local="clr-namespace:VideoCenter"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <shell:WindowChrome x:Key="MyWindowChrome"
+                            xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+                            CaptionHeight="32"
+                            CornerRadius="4"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"/>
+
     </Application.Resources>
 </Application>
